@@ -11,7 +11,7 @@ app.use(express.json());
 console.log(process.env.USER);
 console.log(process.env.PASS);
 
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const uri = `mongodb+srv://${process.env.USER}:${process.env.PASS}@cluster0.1oalrlh.mongodb.net/?retryWrites=true&w=majority`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -33,7 +33,7 @@ async function run() {
     const userCollection = client.db('skillSyncDB').collection('user')
 
     app.get('/jobs', async (req, res) => {
-      console.log(req.query);
+      // console.log(req.query);
       const page = parseInt(req.query.page)
       const size = parseInt(req.query.size)
       let query = {}
@@ -49,6 +49,17 @@ async function run() {
       if (req.query?.category) {
         query = { category: req.query.category }
       }
+      const cursor = jobCollection.find(query);
+      const result = await cursor.toArray();
+      res.send(result);
+    })
+    app.get('/job_bid', async (req, res) => {
+      const id = req.query?.id
+      let query = {}
+      if (req.query?.id) {
+        query = { _id: new ObjectId(id) }
+      }
+      console.log(query);
       const cursor = jobCollection.find(query);
       const result = await cursor.toArray();
       res.send(result);
