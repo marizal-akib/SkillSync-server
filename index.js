@@ -177,6 +177,23 @@ async function run() {
       res.send(result);
     })
 
+    app.put('/bid_req/:id', async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) }
+      const options = { upsert: true };
+      const updateJob = req.body;
+      const job = {
+        $set: {
+          status: updateJob.status,
+         
+
+        }
+      }
+
+      const result = await bidCollection.updateOne(filter, job, options);
+      res.send(result);
+
+    })
     app.put('/complete_job/:id', async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) }
