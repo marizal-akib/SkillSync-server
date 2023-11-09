@@ -31,6 +31,7 @@ async function run() {
     // await client.connect();
     const jobCollection = client.db('skillSyncDB').collection('jobs')
     const userCollection = client.db('skillSyncDB').collection('user')
+    const bidCollection = client.db('skillSyncDB').collection('bid')
 
     app.post('/jobs', async (req, res) => {
       const newJob = req.body;
@@ -113,7 +114,7 @@ async function run() {
       const query = { _id: new ObjectId(id) }
       const result = await jobCollection.deleteOne(query);
       res.send(result);
-  })
+    })
     // user
 
 
@@ -133,6 +134,67 @@ async function run() {
       }
     })
 
+    // bid
+    bidCollection.createIndex({ jobId: 1 }, { unique: true });
+    app.post('/bid', async (req, res) => {
+      const newBid = req.body;
+
+      try {
+        const result = await bidCollection.insertOne(newBid);
+        res.send(result);
+      } catch (error) {
+        if (error.code === 11000) {
+          res.status(400).send('Duplicate entry found. Please provide a unique value.');
+        } else {
+          res.status(500).send('Internal server error');
+        }
+      }
+    })
+
+
+    app.get('/my_bid', async (req, res) => {
+      let query = {}
+      if (req.query?.email) {
+        query = {
+          bidderEmail
+            : req.query.email
+        }
+      }
+      const cursor = bidCollection.find(query);
+      const result = await cursor.toArray();
+      res.send(result);
+    })
+    app.get('/bid_req', async (req, res) => {
+      let query = {}
+      if (req.query?.email) {
+        query = {
+          employerEmail
+            : req.query.email
+        }
+      }
+      const cursor = bidCollection.find(query);
+      const result = await cursor.toArray();
+      res.send(result);
+    })
+
+    app.put('/complete_job/:id', async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) }
+      const options = { upsert: true };
+      const updateJob = req.body;
+      const job = {
+        $set: {
+          status: updateJob.status,
+         
+
+        }
+      }
+
+      const result = await bidCollection.updateOne(filter, job, options);
+      res.send(result);
+
+    })
+    
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
