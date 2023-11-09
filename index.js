@@ -6,7 +6,13 @@ const port = process.env.Port || 5000;
 
 // middleware
 dotenv.config()
-app.use(cors());
+app.use(cors(({
+  origin:[
+    'http://localhost:5173'
+
+  ],
+  credentials:true
+})));
 app.use(express.json());
 console.log(process.env.USER);
 console.log(process.env.PASS);
@@ -32,6 +38,11 @@ async function run() {
     const jobCollection = client.db('skillSyncDB').collection('jobs')
     const userCollection = client.db('skillSyncDB').collection('user')
     const bidCollection = client.db('skillSyncDB').collection('bid')
+
+    // auth
+    app.post('/jwt',async(req,res)=>{
+
+    })
 
     app.post('/jobs', async (req, res) => {
       const newJob = req.body;
