@@ -8,7 +8,7 @@ const port = process.env.Port || 5000;
 dotenv.config()
 app.use(cors(({
   origin:[
-    'http://localhost:5173'
+    "https://skill-sync-88593.web.app","https://skill-sync-88593.firebaseapp.com/"
 
   ],
   credentials:true
