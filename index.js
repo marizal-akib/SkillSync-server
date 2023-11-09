@@ -29,8 +29,14 @@ async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
     // await client.connect();
-    const jobCollection = client.db('skillSyncDB').collection('jobCollection')
+    const jobCollection = client.db('skillSyncDB').collection('jobs')
     const userCollection = client.db('skillSyncDB').collection('user')
+
+    app.post('/jobs', async (req, res) => {
+      const newJob = req.body;
+      const result = await jobCollection.insertOne(newJob);
+      res.send(result);
+    })
 
     app.get('/jobs', async (req, res) => {
       // console.log(req.query);
@@ -44,10 +50,24 @@ async function run() {
       const result = await jobCollection.find(query).skip(page * size).limit(size).toArray();
       res.send(result);
     })
+
+
     app.get('/all_jobs', async (req, res) => {
       let query = {}
       if (req.query?.category) {
         query = { category: req.query.category }
+      }
+      const cursor = jobCollection.find(query);
+      const result = await cursor.toArray();
+      res.send(result);
+    })
+    app.get('/my_post', async (req, res) => {
+      let query = {}
+      if (req.query?.email) {
+        query = {
+          employerEmail
+            : req.query.email
+        }
       }
       const cursor = jobCollection.find(query);
       const result = await cursor.toArray();
@@ -63,6 +83,48 @@ async function run() {
       const cursor = jobCollection.find(query);
       const result = await cursor.toArray();
       res.send(result);
+    })
+
+    app.put('/update_job/:id', async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) }
+      const options = { upsert: true };
+      const updateJob = req.body;
+      const job = {
+        $set: {
+          jobTitle: updateJob.jobTitle,
+          minPrice: updateJob.minPrice,
+          maxPrice: updateJob.maxPrice,
+          category: updateJob.category,
+          deadline: updateJob.deadline,
+          description: updateJob.description,
+
+        }
+      }
+
+      const result = await jobCollection.updateOne(filter, job, options);
+      res.send(result);
+
+    })
+
+
+    // user
+
+
+    userCollection.createIndex({ email: 1 }, { unique: true });
+    app.post('/user', async (req, res) => {
+      const user = req.body;
+      // console.log(user);
+      try {
+        const result = await userCollection.insertOne(user);
+        res.send(result);
+      } catch (error) {
+        if (error.code === 11000) {
+          res.status(400).send('Duplicate entry found. Please provide a unique value.');
+        } else {
+          res.status(500).send('Internal server error');
+        }
+      }
     })
 
     // Send a ping to confirm a successful connection
